@@ -23,12 +23,17 @@ spring:
   flyway:
     enabled: true
     locations: classpath:db/migration
+    repair-on-migrate: true   # FAILED ステータスのマイグレーションを自動修復して再実行
 
 server:
   port: ${PORT:8080}
   # X-Forwarded-*ヘッダーを考慮してHTTPSリダイレクトURIを正しく生成
   # Cloud Runのプロキシ環境ではNATIVEを使用
   forward-headers-strategy: NATIVE
+
+logging:
+  level:
+    org.flywaydb: DEBUG
 
 pbac:
   # DENY_OVERRIDES: 1件でもDENYがあればDENY
