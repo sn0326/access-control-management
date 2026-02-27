@@ -9,8 +9,8 @@ on:
 env:
   PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-northeast1
-  SERVICE_NAME: sample-cicd-springboot-gcp
-  REPOSITORY: sample-cicd-springboot-gcp
+  SERVICE_NAME: access-control-management
+  REPOSITORY: access-control-management
 
 jobs:
   test:
