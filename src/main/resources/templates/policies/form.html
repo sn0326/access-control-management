@@ -1,0 +1,50 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>ポリシー追加 - PBAC Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">PBAC Engine</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/users}">ユーザー</a>
+      <a class="nav-link" th:href="@{/resources}">リソース</a>
+      <a class="nav-link active" th:href="@{/policies}">ポリシー</a>
+      <a class="nav-link fw-bold text-warning" th:href="@{/access-test}">アクセス判定テスト</a>
+    </div>
+  </div>
+</nav>
+<div class="container" style="max-width: 600px;">
+  <h2 class="mb-4">ポリシー追加</h2>
+  <p class="text-muted">ポリシーを作成後、詳細画面でターゲットと条件を追加できます。</p>
+  <form th:action="@{/policies}" th:object="${policy}" method="post">
+    <div class="mb-3">
+      <label class="form-label">名前</label>
+      <input type="text" class="form-control" th:field="*{name}" required>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">説明</label>
+      <textarea class="form-control" th:field="*{description}" rows="2"></textarea>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">Effect</label>
+      <select class="form-select" th:field="*{effect}" required>
+        <option value="PERMIT">PERMIT（許可）</option>
+        <option value="DENY">DENY（拒否）</option>
+      </select>
+    </div>
+    <div class="mb-3">
+      <label class="form-label">優先度（大きいほど優先）</label>
+      <input type="number" class="form-control" th:field="*{priority}" value="0">
+    </div>
+    <div class="d-flex gap-2">
+      <button type="submit" class="btn btn-primary">保存してターゲット・条件を設定</button>
+      <a th:href="@{/policies}" class="btn btn-secondary">キャンセル</a>
+    </div>
+  </form>
+</div>
+</body>
+</html>

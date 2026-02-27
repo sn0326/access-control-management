@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>ポリシー詳細 - PBAC Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">PBAC Engine</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/users}">ユーザー</a>
+      <a class="nav-link" th:href="@{/resources}">リソース</a>
+      <a class="nav-link active" th:href="@{/policies}">ポリシー</a>
+      <a class="nav-link fw-bold text-warning" th:href="@{/access-test}">アクセス判定テスト</a>
+    </div>
+  </div>
+</nav>
+<div class="container">
+  <!-- ポリシー基本情報 -->
+  <div class="d-flex align-items-center gap-3 mb-4">
+    <h2 th:text="${policy.name}"></h2>
+    <span th:text="${policy.effect}"
+          th:classappend="${policy.effect == 'PERMIT'} ? 'badge bg-success fs-6' : 'badge bg-danger fs-6'"></span>
+    <span th:text="${policy.enabled} ? '有効' : '無効'"
+          th:classappend="${policy.enabled} ? 'badge bg-success' : 'badge bg-secondary'"></span>
+  </div>
+  <p class="text-muted" th:text="${policy.description}"></p>
+  <p><strong>優先度:</strong> <span th:text="${policy.priority}"></span></p>
+
+  <hr>
+
+  <!-- ターゲット設定 -->
+  <h4>ターゲット（適用範囲）</h4>
+  <p class="text-muted small">
+    同一カテゴリ内は OR、カテゴリ間は AND で評価。未定義のカテゴリはワイルドカード。
+  </p>
+  <table class="table table-sm table-bordered mb-2" th:if="${!policy.targets.isEmpty()}">
+    <thead class="table-light">
+      <tr><th>カテゴリ</th><th>属性名</th><th>演算子</th><th>値</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="t : ${policy.targets}">
+        <td th:text="${t.targetCategory}"></td>
+        <td th:text="${t.attrName}"></td>
+        <td th:text="${t.operator}"></td>
+        <td th:text="${t.attrValue}"></td>
+        <td>
+          <a th:href="@{/policies/{id}/targets/{tid}/delete(id=${policy.id}, tid=${t.id})}"
+             class="btn btn-sm btn-outline-danger">削除</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p th:if="${policy.targets.isEmpty()}" class="text-muted">ターゲット未定義（全対象に適用）</p>
+
+  <!-- ターゲット追加フォーム -->
+  <form th:action="@{/policies/{id}/targets(id=${policy.id})}" th:object="${newTarget}" method="post" class="row g-2 mb-4">
+    <div class="col-auto">
+      <select class="form-select form-select-sm" th:field="*{targetCategory}" required>
+        <option value="">カテゴリ</option>
+        <option value="SUBJECT">SUBJECT</option>
+        <option value="RESOURCE">RESOURCE</option>
+        <option value="ACTION">ACTION</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" th:field="*{attrName}"
+             placeholder="属性名 (例: name, department)" required>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" th:field="*{operator}" required>
+        <option value="EQ">EQ</option>
+        <option value="NEQ">NEQ</option>
+        <option value="GT">GT</option>
+        <option value="GTE">GTE</option>
+        <option value="LT">LT</option>
+        <option value="LTE">LTE</option>
+        <option value="IN">IN</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" th:field="*{attrValue}"
+             placeholder="値 (例: READ, engineering)" required>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-sm btn-outline-primary">ターゲット追加</button>
+    </div>
+  </form>
+
+  <hr>
+
+  <!-- 条件設定 -->
+  <h4>条件（アクセス判定ロジック）</h4>
+  <p class="text-muted small">
+    同一ポリシー内の複数条件は AND で評価。CONST は right_attr_name に定数値を記述。
+  </p>
+  <table class="table table-sm table-bordered mb-2" th:if="${!policy.conditions.isEmpty()}">
+    <thead class="table-light">
+      <tr><th>順序</th><th>左辺ソース</th><th>左辺属性名</th><th>演算子</th><th>右辺ソース</th><th>右辺属性名/値</th><th></th></tr>
+    </thead>
+    <tbody>
+      <tr th:each="c : ${policy.conditions}">
+        <td th:text="${c.conditionOrder}"></td>
+        <td th:text="${c.leftAttrSource}"></td>
+        <td th:text="${c.leftAttrName}"></td>
+        <td th:text="${c.operator}"></td>
+        <td th:text="${c.rightAttrSource}"></td>
+        <td th:text="${c.rightAttrName}"></td>
+        <td>
+          <a th:href="@{/policies/{id}/conditions/{cid}/delete(id=${policy.id}, cid=${c.id})}"
+             class="btn btn-sm btn-outline-danger">削除</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p th:if="${policy.conditions.isEmpty()}" class="text-muted">条件未定義（無条件に成立）</p>
+
+  <!-- 条件追加フォーム -->
+  <form th:action="@{/policies/{id}/conditions(id=${policy.id})}" th:object="${newCondition}" method="post" class="row g-2 mb-4">
+    <div class="col-auto">
+      <input type="number" class="form-control form-control-sm" th:field="*{conditionOrder}" placeholder="順序" value="1" style="width:70px">
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" th:field="*{leftAttrSource}" required>
+        <option value="">左辺ソース</option>
+        <option value="USER_ATTR">USER_ATTR</option>
+        <option value="RESOURCE_ATTR">RESOURCE_ATTR</option>
+        <option value="ENV_ATTR">ENV_ATTR</option>
+        <option value="CONST">CONST</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" th:field="*{leftAttrName}"
+             placeholder="属性名" required>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" th:field="*{operator}" required>
+        <option value="EQ">EQ</option>
+        <option value="NEQ">NEQ</option>
+        <option value="GT">GT</option>
+        <option value="GTE">GTE</option>
+        <option value="LT">LT</option>
+        <option value="LTE">LTE</option>
+        <option value="CONTAINS">CONTAINS</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <select class="form-select form-select-sm" th:field="*{rightAttrSource}" required>
+        <option value="">右辺ソース</option>
+        <option value="USER_ATTR">USER_ATTR</option>
+        <option value="RESOURCE_ATTR">RESOURCE_ATTR</option>
+        <option value="ENV_ATTR">ENV_ATTR</option>
+        <option value="CONST">CONST</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <input type="text" class="form-control form-control-sm" th:field="*{rightAttrName}"
+             placeholder="属性名 or 定数値" required>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-sm btn-outline-primary">条件追加</button>
+    </div>
+  </form>
+
+  <a th:href="@{/policies}" class="btn btn-secondary">← 一覧に戻る</a>
+</div>
+</body>
+</html>

@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>リソース管理 - PBAC Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">PBAC Engine</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/users}">ユーザー</a>
+      <a class="nav-link active" th:href="@{/resources}">リソース</a>
+      <a class="nav-link" th:href="@{/policies}">ポリシー</a>
+      <a class="nav-link fw-bold text-warning" th:href="@{/access-test}">アクセス判定テスト</a>
+    </div>
+  </div>
+</nav>
+<div class="container">
+  <div class="d-flex justify-content-between align-items-center mb-3">
+    <h2>リソース一覧</h2>
+    <a th:href="@{/resources/new}" class="btn btn-primary">+ 追加</a>
+  </div>
+  <table class="table table-bordered table-hover">
+    <thead class="table-dark">
+      <tr>
+        <th>ID</th>
+        <th>名前</th>
+        <th>種別</th>
+        <th>所有部署</th>
+        <th>機密レベル</th>
+        <th></th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr th:each="resource : ${resources}">
+        <td th:text="${resource.id}"></td>
+        <td th:text="${resource.name}"></td>
+        <td th:text="${resource.resourceType}"></td>
+        <td th:text="${resource.ownerDepartment}"></td>
+        <td th:text="${resource.sensitivityLevel}"></td>
+        <td>
+          <a th:href="@{/resources/{id}/delete(id=${resource.id})}"
+             onclick="return confirm('削除しますか？')"
+             class="btn btn-sm btn-outline-danger">削除</a>
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+</body>
+</html>

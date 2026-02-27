@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+  <meta charset="UTF-8">
+  <title>アクセス判定テスト - PBAC Engine</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+</head>
+<body>
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
+  <div class="container">
+    <a class="navbar-brand" href="/">PBAC Engine</a>
+    <div class="navbar-nav">
+      <a class="nav-link" th:href="@{/users}">ユーザー</a>
+      <a class="nav-link" th:href="@{/resources}">リソース</a>
+      <a class="nav-link" th:href="@{/policies}">ポリシー</a>
+      <a class="nav-link fw-bold text-warning active" th:href="@{/access-test}">アクセス判定テスト</a>
+    </div>
+  </div>
+</nav>
+<div class="container">
+  <h2 class="mb-4">アクセス判定テスト（PDP シミュレーター）</h2>
+
+  <!-- 入力フォーム -->
+  <div class="card mb-4">
+    <div class="card-header">リクエスト入力</div>
+    <div class="card-body">
+      <form th:action="@{/access-test}" method="post" class="row g-3">
+        <div class="col-md-4">
+          <label class="form-label">ユーザー（Subject）</label>
+          <select name="userId" class="form-select" required>
+            <option value="">選択してください</option>
+            <option th:each="u : ${users}"
+                    th:value="${u.id}"
+                    th:text="${u.username + ' (' + u.department + ' / ' + u.role + ' / Lv.' + u.clearanceLevel + ')'}"
+                    th:selected="${selectedUser != null and selectedUser.id == u.id}">
+            </option>
+          </select>
+        </div>
+        <div class="col-md-4">
+          <label class="form-label">リソース</label>
+          <select name="resourceId" class="form-select" required>
+            <option value="">選択してください</option>
+            <option th:each="r : ${resources}"
+                    th:value="${r.id}"
+                    th:text="${r.name + ' (' + r.resourceType + ' / ' + r.ownerDepartment + ' / Lv.' + r.sensitivityLevel + ')'}"
+                    th:selected="${selectedResource != null and selectedResource.id == r.id}">
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2">
+          <label class="form-label">アクション</label>
+          <select name="actionName" class="form-select" required>
+            <option value="">選択</option>
+            <option th:each="a : ${actions}"
+                    th:value="${a.name}"
+                    th:text="${a.name}"
+                    th:selected="${selectedAction != null and selectedAction == a.name}">
+            </option>
+          </select>
+        </div>
+        <div class="col-md-2 d-flex align-items-end">
+          <button type="submit" class="btn btn-warning w-100">判定実行</button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- 判定結果 -->
+  <div th:if="${accessDecision != null}">
+
+    <!-- 最終決定 -->
+    <div class="alert"
+         th:classappend="${accessDecision.decision.name() == 'PERMIT'} ? 'alert-success' :
+                         (${accessDecision.decision.name() == 'DENY'}  ? 'alert-danger'  : 'alert-secondary')">
+      <h3>
+        <strong>判定結果: </strong>
+        <span th:text="${accessDecision.decision.name()}"></span>
+      </h3>
+      <p th:if="${accessDecision.decision.name() == 'NOT_APPLICABLE'}" class="mb-0">
+        適用可能なポリシーが存在しません。デフォルトで拒否されます。
+      </p>
+    </div>
+
+    <!-- コンテキスト（PIP が収集した属性） -->
+    <div class="row mb-4">
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-light">ユーザー属性（PIP）</div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" th:each="entry : ${context.userAttrs()}">
+              <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-light">リソース属性（PIP）</div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" th:each="entry : ${context.resourceAttrs()}">
+              <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+      <div class="col-md-4">
+        <div class="card">
+          <div class="card-header bg-light">環境属性（PIP）</div>
+          <ul class="list-group list-group-flush">
+            <li class="list-group-item" th:each="entry : ${context.envAttrs()}">
+              <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
+            </li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- ポリシー評価詳細（PDP の内部動作） -->
+    <h4>ポリシー評価詳細（PDP）</h4>
+    <table class="table table-bordered">
+      <thead class="table-dark">
+        <tr>
+          <th>ポリシー名</th>
+          <th>Effect</th>
+          <th>優先度</th>
+          <th>ターゲット一致</th>
+          <th>条件成立</th>
+          <th>適用</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr th:each="detail : ${accessDecision.evaluationDetails()}"
+            th:classappend="${detail.applied()} ? 'table-success' : ''">
+          <td th:text="${detail.policy().name()}"></td>
+          <td>
+            <span th:text="${detail.policy().effect()}"
+                  th:classappend="${detail.policy().effect() == 'PERMIT'} ? 'badge bg-success' : 'badge bg-danger'"></span>
+          </td>
+          <td th:text="${detail.policy().priority()}"></td>
+          <td>
+            <span th:text="${detail.targetMatched()} ? '✓' : '✗'"
+                  th:classappend="${detail.targetMatched()} ? 'text-success fw-bold' : 'text-muted'"></span>
+          </td>
+          <td>
+            <span th:if="${detail.targetMatched()}"
+                  th:text="${detail.conditionsMet()} ? '✓' : '✗'"
+                  th:classappend="${detail.conditionsMet()} ? 'text-success fw-bold' : 'text-danger fw-bold'"></span>
+            <span th:unless="${detail.targetMatched()}" class="text-muted">-</span>
+          </td>
+          <td>
+            <span th:text="${detail.applied()} ? '適用' : '-'"
+                  th:classappend="${detail.applied()} ? 'badge bg-primary' : ''"></span>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+</body>
+</html>
