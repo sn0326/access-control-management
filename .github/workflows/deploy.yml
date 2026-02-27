@@ -7,17 +7,21 @@ on:
     branches: [ main ]
 
 env:
-  PROJECT_ID: sn0326-sandbox
+  PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
   REGION: asia-northeast1
-  SERVICE_NAME: access-control-management
-  REPOSITORY: access-control-management
+  SERVICE_NAME: sample-cicd-springboot-gcp
+  REPOSITORY: sample-cicd-springboot-gcp
 
 jobs:
   test:
     name: Test
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
-    
+
+    permissions:
+      contents: read
+      pull-requests: write
+
     steps:
     - uses: actions/checkout@v4
     
@@ -33,6 +37,32 @@ jobs:
     
     - name: Build
       run: mvn clean package -DskipTests
+
+    - name: Calculate Lines of Code
+      run: |
+        sudo apt-get update && sudo apt-get install -y cloc
+        echo "=========================================="
+        echo "📊 Lines of Code Statistics"
+        echo "=========================================="
+        cloc --exclude-dir=target,node_modules,.git --by-file-by-lang .
+        echo ""
+        echo "Summary:"
+        cloc --exclude-dir=target,node_modules,.git .
+
+    - name: Comment LoC on PR
+      if: github.event_name == 'pull_request'
+      uses: actions/github-script@v7
+      with:
+        script: |
+          const { execSync } = require('child_process');
+          const loc = execSync('cloc --exclude-dir=target,node_modules,.git --md .').toString();
+
+          await github.rest.issues.createComment({
+            issue_number: context.issue.number,
+            owner: context.repo.owner,
+            repo: context.repo.repo,
+            body: `## 📊 Lines of Code Statistics\n\n${loc}`
+          });
 
   deploy:
     name: Deploy to Cloud Run
@@ -55,12 +85,23 @@ jobs:
 
     - name: Build with Maven
       run: mvn clean package -DskipTests
-    
+
+    - name: Calculate Lines of Code
+      run: |
+        sudo apt-get update && sudo apt-get install -y cloc
+        echo "=========================================="
+        echo "📊 Lines of Code Statistics"
+        echo "=========================================="
+        cloc --exclude-dir=target,node_modules,.git --by-file-by-lang .
+        echo ""
+        echo "Summary:"
+        cloc --exclude-dir=target,node_modules,.git .
+
     - name: Authenticate to Google Cloud
       uses: google-github-actions/auth@v2
       with:
-        workload_identity_provider: 'projects/886125133850/locations/global/workloadIdentityPools/github-pool/providers/github-provider'
-        service_account: 'github-actions@sn0326-sandbox.iam.gserviceaccount.com'
+        workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+        service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
     
     - name: Set up Cloud SDK
       uses: google-github-actions/setup-gcloud@v2

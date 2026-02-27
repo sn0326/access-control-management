@@ -2,12 +2,6 @@ spring:
   application:
     name: access-control-management
 
-  datasource:
-    url: jdbc:postgresql://localhost:5432/access_control_management
-    username: postgres
-    password: postgres
-    driver-class-name: org.postgresql.Driver
-
   jpa:
     hibernate:
       ddl-auto: validate
@@ -15,6 +9,22 @@ spring:
     properties:
       hibernate:
         format_sql: true
+
+  # 構造化ロギング設定
+  structured:
+    format:
+      console: ecs  # Elastic Common Schema形式
+    ecs:
+      service:
+        name: ${spring.application.name}
+        version: 0.0.1-SNAPSHOT
+        environment: ${SPRING_PROFILES_ACTIVE:default}
+
+server:
+  port: ${PORT:8080}
+  # X-Forwarded-*ヘッダーを考慮してHTTPSリダイレクトURIを正しく生成
+  # Cloud Runのプロキシ環境ではNATIVEを使用
+  forward-headers-strategy: NATIVE
 
   flyway:
     enabled: true
