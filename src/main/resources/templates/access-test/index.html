@@ -91,8 +91,8 @@
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
               <!-- clearance_level のみラベルを補足表示 -->
               <span th:if="${entry.key == 'clearance_level'}"
-                    th:class="${'ms-1 badge ' + @levelLabel.clearanceBadgeClass(T(Integer).parseInt(entry.value))}"
-                    th:text="${@levelLabel.clearanceLabel(T(Integer).parseInt(entry.value))}">
+                    th:class="${'ms-1 badge ' + @levelLabel.clearanceBadgeClass(entry.value)}"
+                    th:text="${@levelLabel.clearanceLabel(entry.value)}">
               </span>
             </li>
           </ul>
@@ -106,8 +106,8 @@
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
               <!-- sensitivity_level のみラベルを補足表示 -->
               <span th:if="${entry.key == 'sensitivity_level'}"
-                    th:class="${'ms-1 badge ' + @levelLabel.sensitivityBadgeClass(T(Integer).parseInt(entry.value))}"
-                    th:text="${@levelLabel.sensitivityLabel(T(Integer).parseInt(entry.value))}">
+                    th:class="${'ms-1 badge ' + @levelLabel.sensitivityBadgeClass(entry.value)}"
+                    th:text="${@levelLabel.sensitivityLabel(entry.value)}">
               </span>
             </li>
           </ul>
