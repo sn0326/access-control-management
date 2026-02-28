@@ -22,6 +22,19 @@
     <h2>ユーザー一覧</h2>
     <a th:href="@{/users/new}" class="btn btn-primary">+ 追加</a>
   </div>
+
+  <!-- クリアランスレベルの凡例 -->
+  <div class="card mb-3">
+    <div class="card-body py-2">
+      <small class="text-muted me-2">クリアランスレベル:</small>
+      <span class="badge bg-success me-1">Lv.1 一般</span>
+      <span class="badge bg-primary me-1">Lv.2 社員</span>
+      <span class="badge bg-warning text-dark me-1">Lv.3 リーダー</span>
+      <span class="badge bg-danger me-1">Lv.4 管理職</span>
+      <span class="badge bg-dark me-1">Lv.5 管理者</span>
+    </div>
+  </div>
+
   <table class="table table-bordered table-hover">
     <thead class="table-dark">
       <tr>
@@ -30,7 +43,7 @@
         <th>メール</th>
         <th>部署</th>
         <th>ロール</th>
-        <th>クリアランスLv</th>
+        <th>クリアランスレベル</th>
         <th></th>
       </tr>
     </thead>
@@ -41,7 +54,11 @@
         <td th:text="${user.email}"></td>
         <td th:text="${user.department}"></td>
         <td th:text="${user.role}"></td>
-        <td th:text="${user.clearanceLevel}"></td>
+        <td>
+          <span th:class="${'badge ' + @levelLabel.clearanceBadgeClass(user.clearanceLevel)}"
+                th:text="${'Lv.' + user.clearanceLevel + ' ' + @levelLabel.clearanceLabel(user.clearanceLevel)}">
+          </span>
+        </td>
         <td>
           <a th:href="@{/users/{id}/delete(id=${user.id})}"
              onclick="return confirm('削除しますか？')"

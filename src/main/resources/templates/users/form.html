@@ -31,25 +31,31 @@
     <div class="mb-3">
       <label class="form-label">部署</label>
       <select class="form-select" th:field="*{department}" required>
-        <option value="engineering">engineering</option>
-        <option value="hr">hr</option>
-        <option value="finance">finance</option>
-        <option value="sales">sales</option>
-        <option value="it">it</option>
+        <option value="engineering">エンジニアリング部 (engineering)</option>
+        <option value="hr">人事部 (hr)</option>
+        <option value="finance">経理部 (finance)</option>
+        <option value="sales">営業部 (sales)</option>
+        <option value="it">IT部 (it)</option>
       </select>
     </div>
     <div class="mb-3">
       <label class="form-label">ロール</label>
       <select class="form-select" th:field="*{role}" required>
-        <option value="admin">admin</option>
-        <option value="manager">manager</option>
-        <option value="developer">developer</option>
-        <option value="viewer">viewer</option>
+        <option value="admin">管理者 (admin)</option>
+        <option value="manager">マネージャー (manager)</option>
+        <option value="developer">開発者 (developer)</option>
+        <option value="viewer">閲覧者 (viewer)</option>
       </select>
     </div>
     <div class="mb-3">
-      <label class="form-label">クリアランスレベル (1〜5)</label>
-      <input type="number" class="form-control" th:field="*{clearanceLevel}" min="1" max="5" required>
+      <label class="form-label">クリアランスレベル</label>
+      <select class="form-select" th:field="*{clearanceLevel}" required>
+        <option value="1">Lv.1 - 一般（新入社員・アルバイト）</option>
+        <option value="2">Lv.2 - 社員（通常の正社員）</option>
+        <option value="3">Lv.3 - リーダー（チームリーダー・主任）</option>
+        <option value="4">Lv.4 - 管理職（部長・マネージャー）</option>
+        <option value="5">Lv.5 - 管理者（役員・システム管理者）</option>
+      </select>
     </div>
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-primary">保存</button>

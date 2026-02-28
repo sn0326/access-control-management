@@ -31,7 +31,7 @@
             <option value="">選択してください</option>
             <option th:each="u : ${users}"
                     th:value="${u.id}"
-                    th:text="${u.username + ' (' + u.department + ' / ' + u.role + ' / Lv.' + u.clearanceLevel + ')'}"
+                    th:text="${u.username + ' ／ ' + u.department + ' ／ ' + u.role + ' ／ ' + @levelLabel.clearanceLabel(u.clearanceLevel) + '（Lv.' + u.clearanceLevel + '）'}"
                     th:selected="${selectedUser != null and selectedUser.id == u.id}">
             </option>
           </select>
@@ -42,7 +42,7 @@
             <option value="">選択してください</option>
             <option th:each="r : ${resources}"
                     th:value="${r.id}"
-                    th:text="${r.name + ' (' + r.resourceType + ' / ' + r.ownerDepartment + ' / Lv.' + r.sensitivityLevel + ')'}"
+                    th:text="${r.name + ' ／ ' + r.resourceType + ' ／ ' + r.ownerDepartment + ' ／ ' + @levelLabel.sensitivityLabel(r.sensitivityLevel) + '（Lv.' + r.sensitivityLevel + '）'}"
                     th:selected="${selectedResource != null and selectedResource.id == r.id}">
             </option>
           </select>
@@ -89,6 +89,11 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item" th:each="entry : ${context.userAttrs()}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
+              <!-- clearance_level のみラベルを補足表示 -->
+              <span th:if="${entry.key == 'clearance_level'}"
+                    th:class="${'ms-1 badge ' + @levelLabel.clearanceBadgeClass(T(Integer).parseInt(entry.value))}"
+                    th:text="${@levelLabel.clearanceLabel(T(Integer).parseInt(entry.value))}">
+              </span>
             </li>
           </ul>
         </div>
@@ -99,6 +104,11 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item" th:each="entry : ${context.resourceAttrs()}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
+              <!-- sensitivity_level のみラベルを補足表示 -->
+              <span th:if="${entry.key == 'sensitivity_level'}"
+                    th:class="${'ms-1 badge ' + @levelLabel.sensitivityBadgeClass(T(Integer).parseInt(entry.value))}"
+                    th:text="${@levelLabel.sensitivityLabel(T(Integer).parseInt(entry.value))}">
+              </span>
             </li>
           </ul>
         </div>

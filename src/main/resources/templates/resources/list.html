@@ -22,6 +22,19 @@
     <h2>リソース一覧</h2>
     <a th:href="@{/resources/new}" class="btn btn-primary">+ 追加</a>
   </div>
+
+  <!-- 機密レベルの凡例 -->
+  <div class="card mb-3">
+    <div class="card-body py-2">
+      <small class="text-muted me-2">機密レベル:</small>
+      <span class="badge bg-success me-1">Lv.1 公開</span>
+      <span class="badge bg-primary me-1">Lv.2 社内限定</span>
+      <span class="badge bg-warning text-dark me-1">Lv.3 部門限定</span>
+      <span class="badge bg-danger me-1">Lv.4 機密</span>
+      <span class="badge bg-dark me-1">Lv.5 極秘</span>
+    </div>
+  </div>
+
   <table class="table table-bordered table-hover">
     <thead class="table-dark">
       <tr>
@@ -39,7 +52,11 @@
         <td th:text="${resource.name}"></td>
         <td th:text="${resource.resourceType}"></td>
         <td th:text="${resource.ownerDepartment}"></td>
-        <td th:text="${resource.sensitivityLevel}"></td>
+        <td>
+          <span th:class="${'badge ' + @levelLabel.sensitivityBadgeClass(resource.sensitivityLevel)}"
+                th:text="${'Lv.' + resource.sensitivityLevel + ' ' + @levelLabel.sensitivityLabel(resource.sensitivityLevel)}">
+          </span>
+        </td>
         <td>
           <a th:href="@{/resources/{id}/delete(id=${resource.id})}"
              onclick="return confirm('削除しますか？')"
