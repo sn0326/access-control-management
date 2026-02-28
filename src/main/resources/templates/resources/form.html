@@ -27,25 +27,31 @@
     <div class="mb-3">
       <label class="form-label">種別</label>
       <select class="form-select" th:field="*{resourceType}" required>
-        <option value="DOCUMENT">DOCUMENT</option>
-        <option value="API">API</option>
-        <option value="REPORT">REPORT</option>
-        <option value="DATABASE">DATABASE</option>
+        <option value="DOCUMENT">DOCUMENT（文書・ドキュメント）</option>
+        <option value="API">API（APIエンドポイント）</option>
+        <option value="REPORT">REPORT（レポート・報告書）</option>
+        <option value="DATABASE">DATABASE（データベース）</option>
       </select>
     </div>
     <div class="mb-3">
       <label class="form-label">所有部署</label>
       <select class="form-select" th:field="*{ownerDepartment}" required>
-        <option value="engineering">engineering</option>
-        <option value="hr">hr</option>
-        <option value="finance">finance</option>
-        <option value="sales">sales</option>
-        <option value="it">it</option>
+        <option value="engineering">エンジニアリング部 (engineering)</option>
+        <option value="hr">人事部 (hr)</option>
+        <option value="finance">経理部 (finance)</option>
+        <option value="sales">営業部 (sales)</option>
+        <option value="it">IT部 (it)</option>
       </select>
     </div>
     <div class="mb-3">
-      <label class="form-label">機密レベル (1〜5)</label>
-      <input type="number" class="form-control" th:field="*{sensitivityLevel}" min="1" max="5" required>
+      <label class="form-label">機密レベル</label>
+      <select class="form-select" th:field="*{sensitivityLevel}" required>
+        <option value="1">Lv.1 - 公開（誰でも閲覧可能）</option>
+        <option value="2">Lv.2 - 社内限定（全社員が対象）</option>
+        <option value="3">Lv.3 - 部門限定（担当部門のみ）</option>
+        <option value="4">Lv.4 - 機密（承認された人のみ）</option>
+        <option value="5">Lv.5 - 極秘（役員・管理者のみ）</option>
+      </select>
     </div>
     <div class="d-flex gap-2">
       <button type="submit" class="btn btn-primary">保存</button>
