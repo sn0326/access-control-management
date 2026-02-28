@@ -74,4 +74,24 @@ public class LevelLabelUtil {
             default -> "bg-secondary";
         };
     }
+
+    /** 文字列のクリアランスレベルを受け取るオーバーロード（Thymeleaf テンプレートから利用）。 */
+    public String clearanceLabel(String levelStr) {
+        return clearanceLabel(Integer.parseInt(levelStr));
+    }
+
+    /** 文字列のクリアランスレベルを受け取るオーバーロード（Thymeleaf テンプレートから利用）。 */
+    public String clearanceBadgeClass(String levelStr) {
+        return clearanceBadgeClass(Integer.parseInt(levelStr));
+    }
+
+    /** 文字列の機密レベルを受け取るオーバーロード（Thymeleaf テンプレートから利用）。 */
+    public String sensitivityLabel(String levelStr) {
+        return sensitivityLabel(Integer.parseInt(levelStr));
+    }
+
+    /** 文字列の機密レベルを受け取るオーバーロード（Thymeleaf テンプレートから利用）。 */
+    public String sensitivityBadgeClass(String levelStr) {
+        return sensitivityBadgeClass(Integer.parseInt(levelStr));
+    }
 }
