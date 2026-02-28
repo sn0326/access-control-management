@@ -45,6 +45,7 @@ public class AccessTestController {
             @RequestParam Long userId,
             @RequestParam Long resourceId,
             @RequestParam String actionName,
+            @RequestParam(required = false) String scenarioId,
             HttpServletRequest request,
             Model model) {
 
@@ -75,8 +76,9 @@ public class AccessTestController {
         model.addAttribute("selectedUser",   user);
         model.addAttribute("selectedResource", resource);
         model.addAttribute("selectedAction", actionName);
-        model.addAttribute("context",        context);
-        model.addAttribute("accessDecision", accessDecision);
+        model.addAttribute("context",            context);
+        model.addAttribute("accessDecision",    accessDecision);
+        model.addAttribute("selectedScenarioId", scenarioId);
 
         return "access-test/index";
     }

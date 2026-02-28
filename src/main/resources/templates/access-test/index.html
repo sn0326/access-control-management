@@ -5,6 +5,11 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>アクセス判定テスト - PBAC Engine</title>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+  <style>
+    .scenario-card { cursor: pointer; transition: all 0.2s; }
+    .scenario-card:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+    .scenario-card.selected { border-color: #ffc107 !important; background-color: #fff8e1; }
+  </style>
 </head>
 <body>
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
@@ -26,14 +31,105 @@
 <div class="container">
   <h2 class="mb-4">アクセス判定テスト（PDP シミュレーター）</h2>
 
-  <!-- 入力フォーム -->
+  <!-- ===== 学習シナリオ ===== -->
+  <div class="card mb-4 border-secondary">
+    <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+      <span>学習シナリオ — カードをクリックしてフォームに自動入力し、「判定実行」で答え合わせ</span>
+      <button type="button" class="btn btn-sm btn-outline-light" onclick="toggleScenarios(this)">折りたたむ</button>
+    </div>
+    <div class="card-body" id="scenariosPanel">
+      <div class="row g-3">
+
+        <!-- シナリオ① -->
+        <div class="col-md-4">
+          <div class="card h-100 scenario-card border-2" id="card-s1" onclick="selectScenario('s1')">
+            <div class="card-body">
+              <h6 class="card-title">シナリオ① — ポリシー①: 同部署アクセス</h6>
+              <p class="card-text small text-muted mb-2">
+                <strong>tanaka</strong>（営業部 / Lv.1）が<br>
+                <strong>製品カタログ2024</strong>（営業部所有 / Lv.1）を<br>
+                <strong>READ</strong> しようとする
+              </p>
+              <span class="badge bg-success">期待: PERMIT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- シナリオ② -->
+        <div class="col-md-4">
+          <div class="card h-100 scenario-card border-2" id="card-s2" onclick="selectScenario('s2')">
+            <div class="card-body">
+              <h6 class="card-title">シナリオ② — ポリシー④: 明示的 DENY</h6>
+              <p class="card-text small text-muted mb-2">
+                <strong>tanaka</strong>（営業部 / Lv.1）が<br>
+                <strong>役員報酬レポート</strong>（経理部所有 / 極秘 Lv.5）を<br>
+                <strong>READ</strong> しようとする
+              </p>
+              <span class="badge bg-danger">期待: DENY</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- シナリオ③ -->
+        <div class="col-md-4">
+          <div class="card h-100 scenario-card border-2" id="card-s3" onclick="selectScenario('s3')">
+            <div class="card-body">
+              <h6 class="card-title">シナリオ③ — ポリシー②: クリアランス比較</h6>
+              <p class="card-text small text-muted mb-2">
+                <strong>yamada</strong>（開発部 / Lv.2）が<br>
+                <strong>社内規定マニュアル</strong>（IT部所有 / 社内限定 Lv.2）を<br>
+                <strong>READ</strong> しようとする
+              </p>
+              <span class="badge bg-success">期待: PERMIT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- シナリオ④ -->
+        <div class="col-md-4">
+          <div class="card h-100 scenario-card border-2" id="card-s4" onclick="selectScenario('s4')">
+            <div class="card-body">
+              <h6 class="card-title">シナリオ④ — ポリシー③: 管理者書き込み</h6>
+              <p class="card-text small text-muted mb-2">
+                <strong>admin</strong>（IT部 / admin / Lv.5）が<br>
+                <strong>システム設計書</strong>（開発部所有 / 部門限定 Lv.3）を<br>
+                <strong>WRITE</strong> しようとする
+              </p>
+              <span class="badge bg-success">期待: PERMIT</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- シナリオ⑤ -->
+        <div class="col-md-4">
+          <div class="card h-100 scenario-card border-2" id="card-s5" onclick="selectScenario('s5')">
+            <div class="card-body">
+              <h6 class="card-title">シナリオ⑤ — DENY_OVERRIDES の真価</h6>
+              <p class="card-text small text-muted mb-2">
+                <strong>nakamura</strong>（<span class="text-danger fw-bold">経理部</span> / Lv.3）が<br>
+                <strong>役員報酬レポート</strong>（<span class="text-danger fw-bold">経理部</span>所有 / 極秘 Lv.5）を<br>
+                <strong>READ</strong> しようとする
+              </p>
+              <span class="badge bg-danger">期待: DENY</span>
+              <span class="badge bg-warning text-dark ms-1">難問</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+
+  <!-- ===== 入力フォーム ===== -->
   <div class="card mb-4">
     <div class="card-header">リクエスト入力</div>
     <div class="card-body">
       <form th:action="@{/access-test}" method="post" class="row g-3">
+        <input type="hidden" name="scenarioId" id="scenarioIdField"
+               th:value="${selectedScenarioId}">
         <div class="col-md-4">
           <label class="form-label">ユーザー（Subject）</label>
-          <select name="userId" class="form-select" required>
+          <select name="userId" id="userIdSelect" class="form-select" required>
             <option value="">選択してください</option>
             <option th:each="u : ${users}"
                     th:value="${u.id}"
@@ -44,7 +140,7 @@
         </div>
         <div class="col-md-4">
           <label class="form-label">リソース</label>
-          <select name="resourceId" class="form-select" required>
+          <select name="resourceId" id="resourceIdSelect" class="form-select" required>
             <option value="">選択してください</option>
             <option th:each="r : ${resources}"
                     th:value="${r.id}"
@@ -55,7 +151,7 @@
         </div>
         <div class="col-md-2">
           <label class="form-label">アクション</label>
-          <select name="actionName" class="form-select" required>
+          <select name="actionName" id="actionNameSelect" class="form-select" required>
             <option value="">選択</option>
             <option th:each="a : ${actions}"
                     th:value="${a.name}"
@@ -71,7 +167,7 @@
     </div>
   </div>
 
-  <!-- 判定結果 -->
+  <!-- ===== 判定結果 ===== -->
   <div th:if="${accessDecision != null}">
 
     <!-- 最終決定 -->
@@ -95,7 +191,6 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item" th:each="entry : ${context.userAttrs()}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
-              <!-- clearance_level のみラベルを補足表示 -->
               <span th:if="${entry.key == 'clearance_level'}"
                     th:class="${'ms-1 badge ' + @levelLabel.clearanceBadgeClass(entry.value)}"
                     th:text="${@levelLabel.clearanceLabel(entry.value)}">
@@ -110,7 +205,6 @@
           <ul class="list-group list-group-flush">
             <li class="list-group-item" th:each="entry : ${context.resourceAttrs()}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
-              <!-- sensitivity_level のみラベルを補足表示 -->
               <span th:if="${entry.key == 'sensitivity_level'}"
                     th:class="${'ms-1 badge ' + @levelLabel.sensitivityBadgeClass(entry.value)}"
                     th:text="${@levelLabel.sensitivityLabel(entry.value)}">
@@ -134,7 +228,7 @@
     <!-- ポリシー評価詳細（PDP の内部動作） -->
     <h4>ポリシー評価詳細（PDP）</h4>
     <div class="table-responsive">
-      <table class="table table-bordered">
+      <table class="table table-bordered mb-4">
         <thead class="table-dark">
           <tr>
             <th>ポリシー名</th>
@@ -172,8 +266,204 @@
         </tbody>
       </table>
     </div>
-  </div>
+
+    <!-- ===== 答え合わせ・解説 ===== -->
+    <div th:if="${selectedScenarioId != null}" th:switch="${selectedScenarioId}">
+
+      <!-- シナリオ① -->
+      <div th:case="'s1'" class="card mb-4 border-info">
+        <div class="card-header bg-info text-white fw-bold">
+          答え合わせ・解説 — シナリオ① 同部署アクセス（学習ポイント①）
+        </div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <span>期待した結果: <span class="badge bg-success fs-6">PERMIT</span></span>
+            <span th:if="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-success fs-6">✓ 正解！</span>
+            <span th:unless="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-danger fs-6">✗ 不正解</span>
+          </div>
+          <h6>なぜ PERMIT になるのか？</h6>
+          <p>
+            <strong>ポリシー①「同部署リソース読み取り許可」</strong>が適用されます。<br>
+            ターゲット条件「アクション = READ」が一致し、続いて本体条件を評価します。<br>
+            <code>user.department（sales）== resource.owner_department（sales）</code> が<strong>一致</strong>するため、PERMIT が返ります。
+          </p>
+          <div class="alert alert-light border mb-0">
+            <strong>学習ポイント①: 属性の相互比較による PBAC の本質</strong><br>
+            RBAC なら「営業部員ロール → 営業リソース」という紐付けをロール管理側で維持し続ける必要があります。
+            PBAC では <code>department == owner_department</code> という<strong>ポリシー 1 本で全営業部員・全営業リソースに対応</strong>できます。
+            新しい部員やリソースが増えてもポリシーを変更する必要はありません。
+          </div>
+        </div>
+      </div>
+
+      <!-- シナリオ② -->
+      <div th:case="'s2'" class="card mb-4 border-info">
+        <div class="card-header bg-info text-white fw-bold">
+          答え合わせ・解説 — シナリオ② 明示的 DENY（学習ポイント④）
+        </div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <span>期待した結果: <span class="badge bg-danger fs-6">DENY</span></span>
+            <span th:if="${accessDecision.decision.name() == 'DENY'}"
+                  class="badge bg-success fs-6">✓ 正解！</span>
+            <span th:unless="${accessDecision.decision.name() == 'DENY'}"
+                  class="badge bg-danger fs-6">✗ 不正解</span>
+          </div>
+          <h6>なぜ DENY になるのか？</h6>
+          <p>
+            優先度 30（最高）の<strong>ポリシー④「極秘リソースへの低クリアランスアクセス拒否」</strong>が最初に評価されます。<br>
+            条件①: <code>user.clearance_level（1）&lt;= 3</code> ✓<br>
+            条件②: <code>resource.sensitivity_level（5）== 5</code> ✓<br>
+            両条件が AND で成立するため DENY が発動し、<code>DENY_OVERRIDES</code> が即座に DENY を確定させます。
+          </p>
+          <p class="text-muted small">
+            補足: tanaka の部署（sales）と役員報酬レポートの部署（finance）は異なるためポリシー①は不成立。
+            クリアランス Lv.1 &lt; 機密 Lv.5 のためポリシー②も不成立。しかしいずれにせよ DENY が確定しています。
+          </p>
+          <div class="alert alert-light border mb-0">
+            <strong>学習ポイント④: DENY_OVERRIDES アルゴリズム</strong><br>
+            デフォルト設定の <code>DENY_OVERRIDES</code> では、<strong>DENY が 1 件でも適用された瞬間に評価を打ち切り、最終結果を DENY に確定</strong>します。
+            他にいくつ PERMIT ポリシーがあっても上書きされます。
+            ポリシー④が優先度 30（最高）に設定されているのは、DENY を確実に先に評価させるためです。
+          </div>
+        </div>
+      </div>
+
+      <!-- シナリオ③ -->
+      <div th:case="'s3'" class="card mb-4 border-info">
+        <div class="card-header bg-info text-white fw-bold">
+          答え合わせ・解説 — シナリオ③ クリアランスレベルによる PERMIT（学習ポイント②）
+        </div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <span>期待した結果: <span class="badge bg-success fs-6">PERMIT</span></span>
+            <span th:if="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-success fs-6">✓ 正解！</span>
+            <span th:unless="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-danger fs-6">✗ 不正解</span>
+          </div>
+          <h6>なぜ PERMIT になるのか？</h6>
+          <p>
+            <strong>ポリシー②「クリアランスレベル読み取り許可」</strong>が適用されます。<br>
+            ポリシー④（DENY）は条件②「sensitivity_level == 5」が不成立（社内規定マニュアルは Lv.2）のため除外。<br>
+            ポリシー①は <code>department（engineering）≠ owner_department（it）</code> で条件不成立。<br>
+            ポリシー②の条件 <code>user.clearance_level（2）&gt;= resource.sensitivity_level（2）</code>（2 ≥ 2）が<strong>成立</strong>し、PERMIT が返ります。
+          </p>
+          <div class="alert alert-light border mb-0">
+            <strong>学習ポイント②: 数値比較による包含関係の表現</strong><br>
+            「Lv.N 以上のユーザーは Lv.N 以下のリソースを読める」という包含関係を <code>GTE</code> 演算子 1 つで表現できます。
+            yamada は IT 部のリソースを所有していませんが、クリアランスレベルが条件を満たすことで部署を越えたアクセスが可能になっています。
+            RBAC でこれを実装しようとすると、各レベルのロールに許可リソースを全列挙する組み合わせ爆発が起きます。
+          </div>
+        </div>
+      </div>
+
+      <!-- シナリオ④ -->
+      <div th:case="'s4'" class="card mb-4 border-info">
+        <div class="card-header bg-info text-white fw-bold">
+          答え合わせ・解説 — シナリオ④ 管理者書き込み（学習ポイント③）
+        </div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <span>期待した結果: <span class="badge bg-success fs-6">PERMIT</span></span>
+            <span th:if="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-success fs-6">✓ 正解！</span>
+            <span th:unless="${accessDecision.decision.name() == 'PERMIT'}"
+                  class="badge bg-danger fs-6">✗ 不正解</span>
+          </div>
+          <h6>なぜ PERMIT になるのか？</h6>
+          <p>
+            アクションが <code>WRITE</code> のため、ターゲットに READ を指定したポリシー①②④はすべてターゲット不一致となります。<br>
+            <strong>ポリシー③「管理者書き込み許可」</strong>だけがターゲット一致し、条件 <code>user.role == "admin"</code>（CONST 比較）が成立するため PERMIT が返ります。
+          </p>
+          <div class="alert alert-light border mb-0">
+            <strong>学習ポイント③: ロール属性 + CONST 比較 / 最小権限の原則</strong><br>
+            ポリシー①②はユーザー属性とリソース属性の<strong>相互比較</strong>ですが、ポリシー③は <code>right_attr_source = CONST</code> により<strong>固定値との比較</strong>です。
+            これで「特定ロールを持つユーザーだけに権限付与」という RBAC 的なルールも表現できます。<br>
+            また WRITE に対する PERMIT がポリシー③しか存在しないため、<strong>admin ロール以外は誰も書き込めない</strong>という最小権限の原則が自然に実現されています。
+          </div>
+        </div>
+      </div>
+
+      <!-- シナリオ⑤ -->
+      <div th:case="'s5'" class="card mb-4 border-warning">
+        <div class="card-header bg-warning text-dark fw-bold">
+          答え合わせ・解説 — シナリオ⑤ DENY_OVERRIDES の真価・難問（学習ポイント④ 応用）
+        </div>
+        <div class="card-body">
+          <div class="mb-3 d-flex align-items-center gap-3">
+            <span>期待した結果: <span class="badge bg-danger fs-6">DENY</span></span>
+            <span th:if="${accessDecision.decision.name() == 'DENY'}"
+                  class="badge bg-success fs-6">✓ 正解！</span>
+            <span th:unless="${accessDecision.decision.name() == 'DENY'}"
+                  class="badge bg-danger fs-6">✗ 不正解</span>
+          </div>
+          <h6>なぜ DENY になるのか？（PERMIT が出そうで出ない！）</h6>
+          <p>
+            直感的には「<strong>nakamura も 役員報酬レポート も 経理部（finance）だから、ポリシー①で PERMIT では？</strong>」と思えます。<br>
+            実際にポリシー①「同部署リソース読み取り許可」の条件（finance == finance）は<strong>成立します</strong>。
+          </p>
+          <p>
+            しかし優先度 30 の<strong>ポリシー④「極秘リソースへの低クリアランスアクセス拒否」も同時に成立</strong>します。<br>
+            条件①: <code>nakamura.clearance_level（3）&lt;= 3</code> ✓<br>
+            条件②: <code>sensitivity_level（5）== 5</code> ✓<br>
+            ポリシー④は優先度が最高のため最初に評価され、DENY が確定します。ポリシー①の PERMIT は無効化されます。
+          </p>
+          <div class="alert alert-warning border border-warning mb-0">
+            <strong>学習ポイント④ 応用: 部署帰属と情報アクセス権は別軸で管理する</strong><br>
+            「同じ部署だから読めるはず」という直感を、「クリアランス Lv.3 以下なら極秘情報は絶対に読めない」というセキュリティポリシーが上書きします。
+            PBAC では複数の独立した軸（部署・クリアランス・ロール）を組み合わせて制御できるため、
+            <strong>属性の一つが一致しても、別軸の DENY ポリシーで確実にブロックできます</strong>。
+            これが DENY_OVERRIDES の存在意義です。
+          </div>
+        </div>
+      </div>
+
+    </div><!-- end th:switch -->
+  </div><!-- end 判定結果 -->
+
 </div>
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+<script>
+  const scenarios = {
+    's1': { userId: '1', resourceId: '1', action: 'READ' },
+    's2': { userId: '1', resourceId: '5', action: 'READ' },
+    's3': { userId: '2', resourceId: '2', action: 'READ' },
+    's4': { userId: '5', resourceId: '3', action: 'WRITE' },
+    's5': { userId: '3', resourceId: '5', action: 'READ' },
+  };
+
+  function selectScenario(id) {
+    const s = scenarios[id];
+    document.getElementById('userIdSelect').value    = s.userId;
+    document.getElementById('resourceIdSelect').value = s.resourceId;
+    document.getElementById('actionNameSelect').value = s.action;
+    document.getElementById('scenarioIdField').value  = id;
+    document.querySelectorAll('.scenario-card').forEach(c => c.classList.remove('selected'));
+    document.getElementById('card-' + id).classList.add('selected');
+  }
+
+  function toggleScenarios(btn) {
+    const panel = document.getElementById('scenariosPanel');
+    if (panel.style.display === 'none') {
+      panel.style.display = '';
+      btn.textContent = '折りたたむ';
+    } else {
+      panel.style.display = 'none';
+      btn.textContent = '展開する';
+    }
+  }
+
+  // ページロード時: 前回選択したシナリオがあればカードをハイライト
+  (function () {
+    const field = document.getElementById('scenarioIdField');
+    if (field && field.value) {
+      const card = document.getElementById('card-' + field.value);
+      if (card) card.classList.add('selected');
+    }
+  })();
+</script>
 </body>
 </html>
