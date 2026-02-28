@@ -1,5 +1,6 @@
 <!DOCTYPE html>
-<html xmlns:th="http://www.thymeleaf.org">
+<html xmlns:th="http://www.thymeleaf.org"
+      xmlns:sec="http://www.thymeleaf.org/extras/spring-security">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -10,11 +11,17 @@
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark mb-4">
   <div class="container">
     <a class="navbar-brand" href="/">PBAC Engine</a>
-    <div class="navbar-nav">
+    <div class="navbar-nav me-auto">
       <a class="nav-link" th:href="@{/users}">ユーザー</a>
       <a class="nav-link" th:href="@{/resources}">リソース</a>
       <a class="nav-link" th:href="@{/policies}">ポリシー</a>
       <a class="nav-link fw-bold text-warning" th:href="@{/access-test}">アクセス判定テスト</a>
+    </div>
+    <div class="navbar-nav ms-auto align-items-center">
+      <span class="navbar-text text-light me-3" sec:authentication="name"></span>
+      <form th:action="@{/logout}" method="post" class="d-inline">
+        <button type="submit" class="btn btn-outline-light btn-sm">ログアウト</button>
+      </form>
     </div>
   </div>
 </nav>
