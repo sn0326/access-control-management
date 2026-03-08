@@ -78,8 +78,8 @@ public class AccessTestController {
         model.addAttribute("selectedUser",   user);
         model.addAttribute("selectedResource", resource);
         model.addAttribute("selectedAction", actionName);
-        model.addAttribute("context",            context);
-        model.addAttribute("accessDecision",    accessDecision);
+        model.addAttribute("context",        AccessContextView.from(context));
+        model.addAttribute("accessDecision", accessDecision);
         model.addAttribute("selectedScenarioId", scenarioId);
 
         return "access-test/index";
