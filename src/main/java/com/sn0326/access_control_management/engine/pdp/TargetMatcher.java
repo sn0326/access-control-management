@@ -18,6 +18,7 @@ import java.util.stream.Collectors;
  *   <li>異なるカテゴリ間 → AND 条件（全カテゴリがマッチしなければならない）</li>
  *   <li>対象カテゴリのターゲットが未定義 → ワイルドカード（常にマッチ）</li>
  * </ul>
+ * 比較ロジックは {@link AttributeComparator} に委譲。
  */
 @Component
 public class TargetMatcher {
@@ -53,7 +54,7 @@ public class TargetMatcher {
         if (actualValue == null) {
             return false;
         }
-        return compare(actualValue, target.getOperator(), target.getAttrValue());
+        return AttributeComparator.compare(actualValue, target.getOperator(), target.getAttrValue());
     }
 
     private String resolveActualValue(String attrName, String category, AccessContext context) {
@@ -63,31 +64,5 @@ public class TargetMatcher {
             case "ACTION"   -> "name".equals(attrName) ? context.actionName() : null;
             default -> null;
         };
-    }
-
-    private boolean compare(String actual, String operator, String expected) {
-        return switch (operator) {
-            case "EQ"  -> actual.equalsIgnoreCase(expected);
-            case "NEQ" -> !actual.equalsIgnoreCase(expected);
-            case "IN"  -> List.of(expected.split(",")).contains(actual);
-            case "GT", "GTE", "LT", "LTE" -> compareNumeric(actual, operator, expected);
-            default -> false;
-        };
-    }
-
-    private boolean compareNumeric(String actual, String operator, String expected) {
-        try {
-            double a = Double.parseDouble(actual);
-            double e = Double.parseDouble(expected);
-            return switch (operator) {
-                case "GT"  -> a > e;
-                case "GTE" -> a >= e;
-                case "LT"  -> a < e;
-                case "LTE" -> a <= e;
-                default -> false;
-            };
-        } catch (NumberFormatException ex) {
-            return false;
-        }
     }
 }

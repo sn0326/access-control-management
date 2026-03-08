@@ -8,7 +8,7 @@ import org.springframework.stereotype.Component;
  * ポリシー条件の評価。
  *
  * <p>left/right それぞれの attr_source に従って値を解決し、
- * operator で比較した結果を返す。
+ * operator で比較した結果を返す。比較ロジックは {@link AttributeComparator} に委譲。
  */
 @Component
 public class ConditionEvaluator {
@@ -21,7 +21,7 @@ public class ConditionEvaluator {
             return false; // 属性が存在しない場合は条件不成立
         }
 
-        return compare(leftValue, condition.getOperator(), rightValue);
+        return AttributeComparator.compare(leftValue, condition.getOperator(), rightValue);
     }
 
     /**
@@ -36,31 +36,5 @@ public class ConditionEvaluator {
             case "CONST"         -> name; // name IS the constant value
             default -> null;
         };
-    }
-
-    private boolean compare(String left, String operator, String right) {
-        return switch (operator) {
-            case "EQ"       -> left.equalsIgnoreCase(right);
-            case "NEQ"      -> !left.equalsIgnoreCase(right);
-            case "CONTAINS" -> left.contains(right);
-            case "GT", "GTE", "LT", "LTE" -> compareNumeric(left, operator, right);
-            default -> false;
-        };
-    }
-
-    private boolean compareNumeric(String left, String operator, String right) {
-        try {
-            double l = Double.parseDouble(left);
-            double r = Double.parseDouble(right);
-            return switch (operator) {
-                case "GT"  -> l > r;
-                case "GTE" -> l >= r;
-                case "LT"  -> l < r;
-                case "LTE" -> l <= r;
-                default -> false;
-            };
-        } catch (NumberFormatException ex) {
-            return false;
-        }
     }
 }
