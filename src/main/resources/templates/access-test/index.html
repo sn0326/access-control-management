@@ -189,7 +189,7 @@
         <div class="card">
           <div class="card-header bg-light">ユーザー属性（PIP）</div>
           <ul class="list-group list-group-flush">
-            <li class="list-group-item" th:each="entry : ${context.userAttrs()}">
+            <li class="list-group-item" th:each="entry : ${context.userAttrs}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
               <span th:if="${entry.key == 'clearance_level'}"
                     th:class="${'ms-1 badge ' + @levelLabel.clearanceBadgeClass(entry.value)}"
@@ -203,7 +203,7 @@
         <div class="card">
           <div class="card-header bg-light">リソース属性（PIP）</div>
           <ul class="list-group list-group-flush">
-            <li class="list-group-item" th:each="entry : ${context.resourceAttrs()}">
+            <li class="list-group-item" th:each="entry : ${context.resourceAttrs}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
               <span th:if="${entry.key == 'sensitivity_level'}"
                     th:class="${'ms-1 badge ' + @levelLabel.sensitivityBadgeClass(entry.value)}"
@@ -217,7 +217,7 @@
         <div class="card">
           <div class="card-header bg-light">環境属性（PIP）</div>
           <ul class="list-group list-group-flush">
-            <li class="list-group-item" th:each="entry : ${context.envAttrs()}">
+            <li class="list-group-item" th:each="entry : ${context.envAttrs}">
               <code th:text="${entry.key}"></code>: <span th:text="${entry.value}"></span>
             </li>
           </ul>
