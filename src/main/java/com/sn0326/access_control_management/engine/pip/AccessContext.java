@@ -31,4 +31,16 @@ import java.util.Map;
 public record AccessContext(
         Map<String, Map<String, String>> attrs,
         String actionName) {
+
+    public Map<String, String> userAttrs() {
+        return attrs.getOrDefault("USER_ATTR", Map.of());
+    }
+
+    public Map<String, String> resourceAttrs() {
+        return attrs.getOrDefault("RESOURCE_ATTR", Map.of());
+    }
+
+    public Map<String, String> envAttrs() {
+        return attrs.getOrDefault("ENV_ATTR", Map.of());
+    }
 }
