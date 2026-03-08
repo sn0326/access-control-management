@@ -3,8 +3,10 @@ package com.sn0326.access_control_management.web.accesstest;
 import com.sn0326.access_control_management.audit.AccessLog;
 import com.sn0326.access_control_management.audit.AccessLogRepository;
 import com.sn0326.access_control_management.domain.action.ActionRepository;
+import com.sn0326.access_control_management.domain.resource.DefaultResourceAttributeProvider;
 import com.sn0326.access_control_management.domain.resource.Resource;
 import com.sn0326.access_control_management.domain.resource.ResourceRepository;
+import com.sn0326.access_control_management.domain.user.DefaultSubjectAttributeProvider;
 import com.sn0326.access_control_management.domain.user.User;
 import com.sn0326.access_control_management.domain.user.UserRepository;
 import com.sn0326.access_control_management.engine.pdp.AccessDecision;
@@ -54,9 +56,11 @@ public class AccessTestController {
         Resource resource = resourceRepository.findById(resourceId)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resourceId));
 
-        // PIP: コンテキスト組み立て
+        // PIP: コンテキスト組み立て（URNで識別子を明示）
         AccessContext context = attributeResolver.resolve(
-                String.valueOf(userId), String.valueOf(resourceId), actionName, request);
+                DefaultSubjectAttributeProvider.URN_PREFIX  + userId,
+                DefaultResourceAttributeProvider.URN_PREFIX + resourceId,
+                actionName, request);
 
         // PDP: アクセス判定
         AccessDecision accessDecision = pdp.decide(context);

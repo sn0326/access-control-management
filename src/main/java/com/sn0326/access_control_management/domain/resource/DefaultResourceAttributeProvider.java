@@ -8,33 +8,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * {@link ResourceAttributeProvider} のデフォルト実装。
+ * このシステム（access-control-management）のリソースを対象とする
+ * {@link ResourceAttributeProvider} 実装。
  *
- * <p>数値IDで resources テーブルを検索し、属性マップを返す。
- * 他サービスが独自の {@link ResourceAttributeProvider} を登録する場合は、
- * {@link #supports(String)} で {@code false} を返すようにすることで共存できる。
+ * <p>担当する識別子の形式: {@value #URN_PREFIX}{resourceId}
+ * （例: {@code urn:acm:resource:10}）
+ *
+ * <p>他システムや別エンティティのリソースを扱うプロバイダは、
+ * 異なるURNプレフィックスを宣言することでこのプロバイダと共存できる。
  */
 @Component
 @RequiredArgsConstructor
 public class DefaultResourceAttributeProvider implements ResourceAttributeProvider {
 
+    /** このプロバイダが担当するURNプレフィックス */
+    public static final String URN_PREFIX = "urn:acm:resource:";
+
     private final ResourceRepository resourceRepository;
 
-    /** 数値IDのみ処理する */
     @Override
     public boolean supports(String resourceId) {
-        if (resourceId == null) return false;
-        try {
-            Long.parseLong(resourceId);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return resourceId != null && resourceId.startsWith(URN_PREFIX);
     }
 
     @Override
     public Map<String, String> resolve(String resourceId) {
-        Resource resource = resourceRepository.findById(Long.parseLong(resourceId))
+        long id = parseId(resourceId);
+        Resource resource = resourceRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resourceId));
 
         Map<String, String> attrs = new HashMap<>();
@@ -42,5 +42,13 @@ public class DefaultResourceAttributeProvider implements ResourceAttributeProvid
         attrs.put("owner_department",  resource.getOwnerDepartment());
         attrs.put("sensitivity_level", String.valueOf(resource.getSensitivityLevel()));
         return attrs;
+    }
+
+    private long parseId(String resourceId) {
+        try {
+            return Long.parseLong(resourceId.substring(URN_PREFIX.length()));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid resource URN: " + resourceId, e);
+        }
     }
 }

@@ -8,33 +8,33 @@ import java.util.HashMap;
 import java.util.Map;
 
 /**
- * {@link SubjectAttributeProvider} のデフォルト実装。
+ * このシステム（access-control-management）のユーザーを対象とする
+ * {@link SubjectAttributeProvider} 実装。
  *
- * <p>数値IDで users テーブルを検索し、属性マップを返す。
- * 他サービスが独自の {@link SubjectAttributeProvider} を登録する場合は、
- * {@link #supports(String)} で {@code false} を返すようにすることで共存できる。
+ * <p>担当する識別子の形式: {@value #URN_PREFIX}{userId}
+ * （例: {@code urn:acm:user:42}）
+ *
+ * <p>他システムや別エンティティのサブジェクトを扱うプロバイダは、
+ * 異なるURNプレフィックスを宣言することでこのプロバイダと共存できる。
  */
 @Component
 @RequiredArgsConstructor
 public class DefaultSubjectAttributeProvider implements SubjectAttributeProvider {
 
+    /** このプロバイダが担当するURNプレフィックス */
+    public static final String URN_PREFIX = "urn:acm:user:";
+
     private final UserRepository userRepository;
 
-    /** 数値IDのみ処理する */
     @Override
     public boolean supports(String subjectId) {
-        if (subjectId == null) return false;
-        try {
-            Long.parseLong(subjectId);
-            return true;
-        } catch (NumberFormatException e) {
-            return false;
-        }
+        return subjectId != null && subjectId.startsWith(URN_PREFIX);
     }
 
     @Override
     public Map<String, String> resolve(String subjectId) {
-        User user = userRepository.findById(Long.parseLong(subjectId))
+        long id = parseId(subjectId);
+        User user = userRepository.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("User not found: " + subjectId));
 
         Map<String, String> attrs = new HashMap<>();
@@ -42,5 +42,13 @@ public class DefaultSubjectAttributeProvider implements SubjectAttributeProvider
         attrs.put("role",            user.getRole());
         attrs.put("clearance_level", String.valueOf(user.getClearanceLevel()));
         return attrs;
+    }
+
+    private long parseId(String subjectId) {
+        try {
+            return Long.parseLong(subjectId.substring(URN_PREFIX.length()));
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("Invalid subject URN: " + subjectId, e);
+        }
     }
 }
