@@ -1,64 +1,67 @@
 package com.sn0326.access_control_management.engine.pip;
 
-import com.sn0326.access_control_management.domain.resource.Resource;
-import com.sn0326.access_control_management.domain.user.User;
 import jakarta.servlet.http.HttpServletRequest;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalTime;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
  * PIP（Policy Information Point）
- * User / Resource / 環境情報から AccessContext を組み立てる。
  *
- * <p>固定カラム設計のため、リフレクションを使わず明示的にマッピングする。
- * ポリシー条件で参照できる属性名はここで定義した key と一致させること。
+ * <p>登録された {@link SubjectAttributeProvider} / {@link ResourceAttributeProvider} に
+ * 属性解決を委譲し、{@link AccessContext} を組み立てる。
+ *
+ * <p>アプリケーションは両インタフェースの実装を Spring Bean として登録するだけでよい。
+ * このクラス自体はドメインエンティティや特定の DB スキーマに依存しない。
  */
 @Component
+@RequiredArgsConstructor
 public class AttributeResolver {
 
+    private final List<SubjectAttributeProvider> subjectProviders;
+    private final List<ResourceAttributeProvider> resourceProviders;
+
     /**
-     * AccessContext を組み立てる。
-     * request が null の場合は環境属性を空にする（テスト用途）。
+     * サブジェクト識別子・リソース識別子から {@link AccessContext} を組み立てる。
+     *
+     * @param subjectId  サブジェクト識別子（数値ID、URN 等）
+     * @param resourceId リソース識別子（数値ID、URN 等）
+     * @param actionName 実行しようとしているアクション名
+     * @param request    HTTP リクエスト（環境属性取得用、null 可）
      */
-    public AccessContext resolve(User user, Resource resource, String actionName, HttpServletRequest request) {
+    public AccessContext resolve(String subjectId, String resourceId,
+                                 String actionName, HttpServletRequest request) {
         return new AccessContext(
-                resolveUserAttrs(user),
-                resolveResourceAttrs(resource),
-                resolveEnvAttrs(request),
+                resolveSubject(subjectId),
+                resolveResource(resourceId),
+                resolveEnv(request),
                 actionName
         );
     }
 
-    /**
-     * ユーザー属性マップを作成する。
-     * key はポリシー条件の left_attr_name / right_attr_name と一致させる。
-     */
-    public Map<String, String> resolveUserAttrs(User user) {
-        Map<String, String> attrs = new HashMap<>();
-        attrs.put("department",      user.getDepartment());
-        attrs.put("role",            user.getRole());
-        attrs.put("clearance_level", String.valueOf(user.getClearanceLevel()));
-        return attrs;
+    private Map<String, String> resolveSubject(String subjectId) {
+        return subjectProviders.stream()
+                .filter(p -> p.supports(subjectId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No SubjectAttributeProvider supports subjectId: " + subjectId))
+                .resolve(subjectId);
     }
 
-    /**
-     * リソース属性マップを作成する。
-     */
-    public Map<String, String> resolveResourceAttrs(Resource resource) {
-        Map<String, String> attrs = new HashMap<>();
-        attrs.put("resource_type",     resource.getResourceType());
-        attrs.put("owner_department",  resource.getOwnerDepartment());
-        attrs.put("sensitivity_level", String.valueOf(resource.getSensitivityLevel()));
-        return attrs;
+    private Map<String, String> resolveResource(String resourceId) {
+        return resourceProviders.stream()
+                .filter(p -> p.supports(resourceId))
+                .findFirst()
+                .orElseThrow(() -> new IllegalArgumentException(
+                        "No ResourceAttributeProvider supports resourceId: " + resourceId))
+                .resolve(resourceId);
     }
 
-    /**
-     * 環境属性マップを作成する。
-     */
-    public Map<String, String> resolveEnvAttrs(HttpServletRequest request) {
+    private Map<String, String> resolveEnv(HttpServletRequest request) {
         Map<String, String> attrs = new HashMap<>();
         attrs.put("hour", String.valueOf(LocalTime.now().getHour()));
         if (request != null) {

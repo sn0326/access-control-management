@@ -55,7 +55,8 @@ public class AccessTestController {
                 .orElseThrow(() -> new IllegalArgumentException("Resource not found: " + resourceId));
 
         // PIP: コンテキスト組み立て
-        AccessContext context = attributeResolver.resolve(user, resource, actionName, request);
+        AccessContext context = attributeResolver.resolve(
+                String.valueOf(userId), String.valueOf(resourceId), actionName, request);
 
         // PDP: アクセス判定
         AccessDecision accessDecision = pdp.decide(context);
