@@ -7,18 +7,27 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 import java.util.stream.Collectors;
 
 /**
  * ポリシーのターゲットマッチング。
  *
- * <p>対象カテゴリごとにターゲット行を評価する。
  * <ul>
  *   <li>同一カテゴリ内の複数行 → OR 条件（いずれか1つでもマッチすればOK）</li>
  *   <li>異なるカテゴリ間 → AND 条件（全カテゴリがマッチしなければならない）</li>
  *   <li>対象カテゴリのターゲットが未定義 → ワイルドカード（常にマッチ）</li>
  * </ul>
- * 比較ロジックは {@link AttributeComparator} に委譲。
+ *
+ * <h2>ライブラリ設計の意図</h2>
+ * target_category は "ACTION" のみ特殊扱い（actionName で直接解決）。
+ * それ以外のカテゴリ（SUBJECT / RESOURCE 等）は context.attrs().get(category) で
+ * ジェネリックに解決する。
+ *
+ * AttributeResolver が "SUBJECT" / "RESOURCE" キーで主属性を格納しているため、
+ * target_category="SUBJECT" なら attrs.get("SUBJECT") を、
+ * target_category="RESOURCE" なら attrs.get("RESOURCE") を引くだけでよい。
+ * 新しい主体カテゴリを追加してもこのクラスは変更不要。
  */
 @Component
 public class TargetMatcher {
@@ -57,12 +66,16 @@ public class TargetMatcher {
         return AttributeComparator.compare(actualValue, target.getOperator(), target.getAttrValue());
     }
 
+    /**
+     * "ACTION" のみ特殊解決。それ以外は target_category をそのまま attrs のキーとして引く。
+     * SUBJECT → attrs.get("SUBJECT")、RESOURCE → attrs.get("RESOURCE") となる。
+     */
     private String resolveActualValue(String attrName, String category, AccessContext context) {
-        return switch (category) {
-            case "SUBJECT"  -> context.userAttrs().get(attrName);
-            case "RESOURCE" -> context.resourceAttrs().get(attrName);
-            case "ACTION"   -> "name".equals(attrName) ? context.actionName() : null;
-            default -> null;
-        };
+        if ("ACTION".equals(category)) {
+            return "name".equals(attrName) ? context.actionName() : null;
+        }
+        return Optional.ofNullable(context.attrs().get(category))
+                       .map(m -> m.get(attrName))
+                       .orElse(null);
     }
 }

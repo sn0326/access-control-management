@@ -4,11 +4,17 @@ import com.sn0326.access_control_management.domain.policy.PolicyCondition;
 import com.sn0326.access_control_management.engine.pip.AccessContext;
 import org.springframework.stereotype.Component;
 
+import java.util.Map;
+import java.util.Optional;
+
 /**
  * ポリシー条件の評価。
  *
- * <p>left/right それぞれの attr_source に従って値を解決し、
- * operator で比較した結果を返す。比較ロジックは {@link AttributeComparator} に委譲。
+ * <h2>ライブラリ設計の意図</h2>
+ * attr_source の解決は "CONST" のみ特殊扱いし、それ以外はすべて
+ * context.attrs().get(source) でジェネリックに引く。
+ * これにより、新しいソース名（"GROUP_ATTR" 等）が追加されても
+ * このクラスは変更不要。ソース名はアプリ側の Subject / AccessResource 実装が定義する。
  */
 @Component
 public class ConditionEvaluator {
@@ -25,16 +31,16 @@ public class ConditionEvaluator {
     }
 
     /**
-     * attr_source に応じて値を解決する。
-     * CONST の場合は attr_name 自体が値（定数）。
+     * CONST はattr_name自体が値。
+     * それ以外は context.attrs() のソース名をキーとしてジェネリックに解決する。
+     * 未知のソース名や属性名が存在しない場合はnullを返す（条件不成立）。
      */
     private String resolveValue(String source, String name, AccessContext context) {
-        return switch (source) {
-            case "USER_ATTR"     -> context.userAttrs().get(name);
-            case "RESOURCE_ATTR" -> context.resourceAttrs().get(name);
-            case "ENV_ATTR"      -> context.envAttrs().get(name);
-            case "CONST"         -> name; // name IS the constant value
-            default -> null;
-        };
+        if ("CONST".equals(source)) {
+            return name;
+        }
+        return Optional.ofNullable(context.attrs().get(source))
+                       .map(m -> m.get(name))
+                       .orElse(null);
     }
 }
